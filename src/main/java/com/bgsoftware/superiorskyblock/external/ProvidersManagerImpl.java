@@ -4,18 +4,7 @@ import com.bgsoftware.common.reflection.ReflectMethod;
 import com.bgsoftware.common.shopsbridge.ShopsProvider;
 import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
 import com.bgsoftware.superiorskyblock.api.handlers.ProvidersManager;
-import com.bgsoftware.superiorskyblock.api.hooks.AFKProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.ChunksProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.EconomyProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.MenusProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.PermissionsProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.PricesProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.SpawnersProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.SpawnersSnapshotProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.StackedBlocksProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.StackedBlocksSnapshotProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.VanishProvider;
-import com.bgsoftware.superiorskyblock.api.hooks.WorldsProvider;
+import com.bgsoftware.superiorskyblock.api.hooks.*;
 import com.bgsoftware.superiorskyblock.api.hooks.listener.ISkinsListener;
 import com.bgsoftware.superiorskyblock.api.hooks.listener.IStackedBlocksListener;
 import com.bgsoftware.superiorskyblock.api.hooks.listener.IWorldsListener;
@@ -57,12 +46,7 @@ import org.bukkit.inventory.ItemStack;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 public class ProvidersManagerImpl extends Manager implements ProvidersManager {
 
@@ -429,6 +413,9 @@ public class ProvidersManagerImpl extends Manager implements ProvidersManager {
 
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder"))
             registerHook("ItemsAdderHook");
+
+        if (Bukkit.getPluginManager().isPluginEnabled("RoseStacker"))
+            registerHook("RoseStackerHook");
     }
 
     private void registerSpawnersProvider() {
