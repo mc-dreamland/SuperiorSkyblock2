@@ -23,6 +23,7 @@ allprojects {
         maven { url 'https://repo.bg-software.com/repository/api/' }
         maven { url 'https://repo.bg-software.com/repository/common/' }
         maven { url 'https://repo.bg-software.com/repository/dependencies/' }
+        maven { url 'https://maven.neoforged.net/' }
     }
 
     dependencies {
@@ -67,6 +68,7 @@ dependencies {
     implementation 'com.bgsoftware.common.shopsbridge:ShopsBridge:1.0.0'
     implementation 'com.bgsoftware.common.dependencies:DependenciesManager:b2'
     implementation 'com.bgsoftware.common.nmsloader:NMSLoader:b1'
+    implementation 'net.neoforged:AutoRenamingTool:2.0.3'
 
     implementation 'com.zaxxer:HikariCP:4.0.3'
     implementation 'org.slf4j:slf4j-api:2.0.5'

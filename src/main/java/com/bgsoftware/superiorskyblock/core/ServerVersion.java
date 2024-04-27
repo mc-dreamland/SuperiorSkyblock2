@@ -41,6 +41,10 @@ public enum ServerVersion {
         this.code = code;
     }
 
+    public static ServerVersion getCurrentVersion() {
+        return currentVersion;
+    }
+
     public static boolean isAtLeast(ServerVersion serverVersion) {
         return isValidVersion(serverVersion) && currentVersion.code >= serverVersion.code;
     }

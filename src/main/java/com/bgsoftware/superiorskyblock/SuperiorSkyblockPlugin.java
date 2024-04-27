@@ -71,6 +71,7 @@ import com.bgsoftware.superiorskyblock.nms.NMSWorld;
 import com.bgsoftware.superiorskyblock.player.PlayersManagerImpl;
 import com.bgsoftware.superiorskyblock.player.container.DefaultPlayersContainer;
 import com.bgsoftware.superiorskyblock.player.respawn.RespawnActions;
+import com.bgsoftware.superiorskyblock.remap.NMSRemapper;
 import com.bgsoftware.superiorskyblock.service.ServicesHandler;
 import com.bgsoftware.superiorskyblock.world.chunk.ChunksProvider;
 import com.bgsoftware.superiorskyblock.world.event.WorldEventsManagerImpl;
@@ -356,6 +357,9 @@ public class SuperiorSkyblockPlugin extends JavaPlugin implements SuperiorSkyblo
     }
 
     private boolean loadNMSAdapter() {
+        NMSRemapper nmsRemapper = new NMSRemapper(this);
+        nmsRemapper.loadNMSFile();
+
         try {
             INMSLoader nmsLoader = NMSHandlersFactory.createNMSLoader(this);
 
