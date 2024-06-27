@@ -67,6 +67,12 @@ public class Keys {
         if (blockType == Materials.SPAWNER.toBukkitType()) {
             CreatureSpawner creatureSpawner = (CreatureSpawner) block.getState();
             baseKey = getSpawnerKeyFromCreatureSpawner(creatureSpawner);
+        } else if (Materials.isSign(blockType)){
+            short data = ServerVersion.isLegacy() ? block.getData() : 0;
+            baseKey = MaterialKey.of(Materials.OAK_SIGN.toBukkitType(), data, MaterialKeySource.BLOCK);
+        } else if (Materials.isItemFrame(blockType)){
+            short data = ServerVersion.isLegacy() ? block.getData() : 0;
+            baseKey = MaterialKey.of(Materials.ITEM_FRAME.toBukkitType(), data, MaterialKeySource.BLOCK);
         } else {
             short data = ServerVersion.isLegacy() ? block.getData() : 0;
             baseKey = MaterialKey.of(blockType, data, MaterialKeySource.BLOCK);

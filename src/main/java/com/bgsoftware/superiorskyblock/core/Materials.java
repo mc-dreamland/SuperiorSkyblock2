@@ -20,6 +20,8 @@ public enum Materials {
     BLACK_STAINED_GLASS_PANE("STAINED_GLASS_PANE", 15),
     BONE_MEAL("INK_SACK", 15),
     NETHER_PORTAL("PORTAL"),
+    OAK_SIGN("SIGN"),
+    ITEM_FRAME("ITEM_FRAME"),
     END_PORTAL_FRAME("ENDER_PORTAL_FRAME");
 
 
@@ -91,6 +93,10 @@ public enum Materials {
         return MATERIAL_TAGS.get(material) instanceof SignMaterialTag;
     }
 
+    public static boolean isItemFrame(Material material) {
+        return MATERIAL_TAGS.get(material) instanceof ItemFrameMaterialTag;
+    }
+
     public static boolean isDye(Material material) {
         return MATERIAL_TAGS.get(material) instanceof DyeMaterialTag;
     }
@@ -139,6 +145,8 @@ public enum Materials {
                 enumMap.put(material, SignMaterialTag.INSTANCE);
             else if (ServerVersion.isLegacy() ? material == Material.INK_SACK : materialName.contains("_DYE"))
                 enumMap.put(material, DyeMaterialTag.INSTANCE);
+            else if (ServerVersion.isLegacy() ? material == Material.ITEM_FRAME : materialName.endsWith("_ITEM_FRAME"))
+                enumMap.put(material, ItemFrameMaterialTag.INSTANCE);
         });
         return enumMap;
     }
@@ -198,6 +206,12 @@ public enum Materials {
     private static class SignMaterialTag implements MaterialTag {
 
         private static final SignMaterialTag INSTANCE = new SignMaterialTag();
+
+    }
+
+    private static class ItemFrameMaterialTag implements MaterialTag {
+
+        private static final ItemFrameMaterialTag INSTANCE = new ItemFrameMaterialTag();
 
     }
 
