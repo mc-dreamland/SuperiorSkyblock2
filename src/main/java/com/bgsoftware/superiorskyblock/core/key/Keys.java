@@ -70,9 +70,9 @@ public class Keys {
         } else if (Materials.isSign(blockType)){
             short data = ServerVersion.isLegacy() ? block.getData() : 0;
             baseKey = MaterialKey.of(Materials.OAK_SIGN.toBukkitType(), data, MaterialKeySource.BLOCK);
-        } else if (Materials.isItemFrame(blockType)){
+        } else if (Materials.isShulkerBox(blockType)){
             short data = ServerVersion.isLegacy() ? block.getData() : 0;
-            baseKey = MaterialKey.of(Materials.ITEM_FRAME.toBukkitType(), data, MaterialKeySource.BLOCK);
+            baseKey = MaterialKey.of(Materials.SHULKER_BOX.toBukkitType(), data, MaterialKeySource.BLOCK);
         } else {
             short data = ServerVersion.isLegacy() ? block.getData() : 0;
             baseKey = MaterialKey.of(blockType, data, MaterialKeySource.BLOCK);

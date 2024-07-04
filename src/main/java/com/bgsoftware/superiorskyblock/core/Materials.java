@@ -21,7 +21,7 @@ public enum Materials {
     BONE_MEAL("INK_SACK", 15),
     NETHER_PORTAL("PORTAL"),
     OAK_SIGN("SIGN"),
-    ITEM_FRAME("ITEM_FRAME"),
+    SHULKER_BOX("CHEST"),
     END_PORTAL_FRAME("ENDER_PORTAL_FRAME");
 
 
@@ -93,8 +93,8 @@ public enum Materials {
         return MATERIAL_TAGS.get(material) instanceof SignMaterialTag;
     }
 
-    public static boolean isItemFrame(Material material) {
-        return MATERIAL_TAGS.get(material) instanceof ItemFrameMaterialTag;
+    public static boolean isShulkerBox(Material material) {
+        return MATERIAL_TAGS.get(material) instanceof ShulkerBoxMaterialTag;
     }
 
     public static boolean isDye(Material material) {
@@ -135,8 +135,12 @@ public enum Materials {
                 enumMap.put(material, MinecartMaterialTag.INSTANCE);
             else if (material == Material.CHEST || material == Material.ENDER_CHEST ||
                     material == Material.TRAPPED_CHEST || materialName.contains("SHULKER_BOX") ||
-                    materialName.equals("BARREL"))
+                    materialName.equals("BARREL")) {
+                if (materialName.contains("SHULKER_BOX")) {
+                    enumMap.put(material, ShulkerBoxMaterialTag.INSTANCE);
+                }
                 enumMap.put(material, ChestMaterialTag.INSTANCE);
+            }
             else if (materialName.contains("BOAT"))
                 enumMap.put(material, BoatMaterialTag.INSTANCE);
             else if (materialName.contains("LAVA"))
@@ -145,8 +149,6 @@ public enum Materials {
                 enumMap.put(material, SignMaterialTag.INSTANCE);
             else if (ServerVersion.isLegacy() ? material == Material.INK_SACK : materialName.contains("_DYE"))
                 enumMap.put(material, DyeMaterialTag.INSTANCE);
-            else if (ServerVersion.isLegacy() ? material == Material.ITEM_FRAME : materialName.endsWith("_ITEM_FRAME"))
-                enumMap.put(material, ItemFrameMaterialTag.INSTANCE);
         });
         return enumMap;
     }
@@ -209,15 +211,15 @@ public enum Materials {
 
     }
 
-    private static class ItemFrameMaterialTag implements MaterialTag {
-
-        private static final ItemFrameMaterialTag INSTANCE = new ItemFrameMaterialTag();
-
-    }
-
     private static class DyeMaterialTag implements MaterialTag {
 
         private static final DyeMaterialTag INSTANCE = new DyeMaterialTag();
+
+    }
+
+    private static class ShulkerBoxMaterialTag implements MaterialTag {
+
+        private static final ShulkerBoxMaterialTag INSTANCE = new ShulkerBoxMaterialTag();
 
     }
 
