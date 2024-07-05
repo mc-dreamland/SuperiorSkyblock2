@@ -1,6 +1,8 @@
 package com.bgsoftware.superiorskyblock.listener;
 
 import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
+import com.bgsoftware.superiorskyblock.api.data.DatabaseBridge;
+import com.bgsoftware.superiorskyblock.api.data.DatabaseFilter;
 import com.bgsoftware.superiorskyblock.api.enums.HitActionResult;
 import com.bgsoftware.superiorskyblock.api.events.IslandUncoopPlayerEvent;
 import com.bgsoftware.superiorskyblock.api.island.Island;
@@ -12,13 +14,19 @@ import com.bgsoftware.superiorskyblock.api.service.region.RegionManagerService;
 import com.bgsoftware.superiorskyblock.api.wrappers.SuperiorPlayer;
 import com.bgsoftware.superiorskyblock.core.LazyReference;
 import com.bgsoftware.superiorskyblock.core.Materials;
+import com.bgsoftware.superiorskyblock.core.database.DatabaseResult;
+import com.bgsoftware.superiorskyblock.core.database.cache.DatabaseCache;
+import com.bgsoftware.superiorskyblock.core.database.serialization.IslandsDeserializer;
+import com.bgsoftware.superiorskyblock.core.database.serialization.PlayersDeserializer;
 import com.bgsoftware.superiorskyblock.core.events.EventResult;
 import com.bgsoftware.superiorskyblock.core.formatting.Formatters;
 import com.bgsoftware.superiorskyblock.core.logging.Log;
 import com.bgsoftware.superiorskyblock.core.messages.Message;
+import com.bgsoftware.superiorskyblock.core.serialization.Serializers;
 import com.bgsoftware.superiorskyblock.core.threads.BukkitExecutor;
 import com.bgsoftware.superiorskyblock.island.IslandUtils;
 import com.bgsoftware.superiorskyblock.island.SIslandChest;
+import com.bgsoftware.superiorskyblock.island.builder.IslandBuilderImpl;
 import com.bgsoftware.superiorskyblock.island.notifications.IslandNotifications;
 import com.bgsoftware.superiorskyblock.island.privilege.IslandPrivileges;
 import com.bgsoftware.superiorskyblock.island.top.SortingTypes;
@@ -30,6 +38,7 @@ import com.bgsoftware.superiorskyblock.world.BukkitEntities;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -42,9 +51,8 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.InventoryHolder;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.math.BigDecimal;
+import java.util.*;
 
 public class PlayersListener implements Listener {
 
@@ -99,6 +107,159 @@ public class PlayersListener implements Listener {
                 });
             }
         }
+    }
+
+    private static final UUID CONSOLE_UUID = new UUID(0, 0);
+    private void loadPlayer(Player player) {
+        UUID uuid = player.getUniqueId();
+        SuperiorPlayer superiorPlayer = plugin.getPlayers().getSuperiorPlayer(player);
+        if (superiorPlayer != null) {
+            plugin.getPlayers().getPlayersContainer().removePlayer(superiorPlayer);
+        }
+
+        DatabaseCache<SuperiorPlayer.Builder> databaseCache = new DatabaseCache<>();
+        DatabaseBridge playersLoader = SuperiorSkyblockPlugin.getPlugin().getFactory().createDatabaseBridge((SuperiorPlayer) null);
+
+        DatabaseFilter playerFilter = DatabaseFilter.fromFilter("player", uuid.toString());
+
+        PlayersDeserializer.deserializeMissions(playersLoader, playerFilter, databaseCache);
+        PlayersDeserializer.deserializePlayerSettings(playersLoader, playerFilter, databaseCache);
+        PlayersDeserializer.deserializePersistentDataContainer(playersLoader, playerFilter, databaseCache);
+
+        playersLoader.loadObject("players",
+                DatabaseFilter.fromFilter("uuid", uuid.toString()),
+                resultSetRaw -> {
+                    DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
+
+                    Optional<UUID> puuid = databaseResult.getUUID("uuid");
+                    if (!puuid.isPresent()) {
+                        Log.warn("Cannot load player with null uuid, skipping...");
+                        return;
+                    }
+
+                    if (puuid.get().equals(CONSOLE_UUID)) {
+                        Log.warn("Cannot load player with uuid 0 (it is reserved to CONSOLE), skipping...");
+                        return;
+                    }
+
+                    plugin.getPlayers().getPlayersContainer().addPlayer(databaseCache.computeIfAbsentInfo(puuid.get(), SuperiorPlayer::newBuilder)
+                            .setUniqueId(puuid.get())
+                            .setName(databaseResult.getString("last_used_name").orElse("null"))
+                            .setDisbands(databaseResult.getInt("disbands").orElse(0))
+                            .setTextureValue(databaseResult.getString("last_used_skin").orElse(""))
+                            .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000))
+                            .build());
+                });
+        DatabaseBridge islandLoader = SuperiorSkyblockPlugin.getPlugin().getFactory().createDatabaseBridge((Island) null);
+        islandLoader.loadObject("islands",
+                DatabaseFilter.fromFilter("owner", uuid.toString()),
+                resultSetRaw -> {
+                    DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
+                    Optional<UUID> puuid = databaseResult.getUUID("uuid");
+                    if (!puuid.isPresent()) {
+                        Log.warn("Cannot load island with null uuid, skipping...");
+                        return;
+                    }
+                    loadIslandData(puuid.get());
+                    Island islandByUUID = plugin.getGrid().getIslandsContainer().getIslandByUUID(puuid.get());
+                }
+        );
+    }
+
+    public void loadIslandData(UUID islandUUID) {
+        DatabaseBridge islandsLoader = SuperiorSkyblockPlugin.getPlugin().getFactory().createDatabaseBridge((Island) null);
+        DatabaseCache<Island.Builder> databaseCache = new DatabaseCache<>();
+
+        DatabaseFilter islandFilter = DatabaseFilter.fromFilter("island", islandUUID.toString());
+
+        IslandsDeserializer.deserializeIslandHomes(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeMembers(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeBanned(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializePlayerPermissions(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeRolePermissions(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeUpgrades(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeWarps(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeBlockLimits(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeRatings(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeMissions(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeIslandFlags(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeGenerators(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeVisitors(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeEntityLimits(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeEffects(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeIslandChest(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeRoleLimits(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeWarpCategories(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeIslandBank(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeVisitorHomes(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeIslandSettings(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializeBankTransactions(islandsLoader, islandFilter, databaseCache);
+        IslandsDeserializer.deserializePersistentDataContainer(islandsLoader, islandFilter, databaseCache);
+
+        islandsLoader.loadObject("islands", DatabaseFilter.fromFilter("uuid", islandUUID.toString()), resultSetRaw -> {
+            DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
+
+            Optional<UUID> uuid = databaseResult.getUUID("uuid");
+            if (!uuid.isPresent()) {
+                Log.warn("Cannot load island with invalid uuid, skipping...");
+                return;
+            }
+
+            Optional<UUID> ownerUUID = databaseResult.getUUID("owner");
+            if (!ownerUUID.isPresent()) {
+                Log.warn("Cannot load island with invalid owner uuid, skipping...");
+                return;
+            }
+
+            SuperiorPlayer owner = plugin.getPlayers().getSuperiorPlayer(ownerUUID.get(), false);
+            if (owner == null) {
+                Log.warn("Cannot load island with unrecognized owner uuid: " + ownerUUID.get() + ", skipping...");
+                return;
+            }
+
+            Optional<String> c = databaseResult.getString("center");
+            Optional<Location> center = c.map(Serializers.LOCATION_SERIALIZER::deserialize);
+            if (!center.isPresent()) {
+                Log.warn("Cannot load island with invalid center, skipping...");
+                return;
+            }
+            Island.Builder builder = databaseCache.computeIfAbsentInfo(uuid.get(), IslandBuilderImpl::new)
+                    .setOwner(owner).setUniqueId(uuid.get())
+                    .setName(databaseResult.getString("name").orElse(""))
+                    .setCenter(center.get())
+                    .setSchematicName(databaseResult.getString("island_type").orElse(null))
+                    .setCreationTime(databaseResult.getLong("creation_time").orElse(System.currentTimeMillis() / 1000L))
+                    .setDiscord(databaseResult.getString("discord").orElse("None"))
+                    .setPaypal(databaseResult.getString("paypal").orElse("None"))
+                    .setBonusWorth(databaseResult.getBigDecimal("worth_bonus").orElse(BigDecimal.ZERO))
+                    .setBonusLevel(databaseResult.getBigDecimal("levels_bonus").orElse(BigDecimal.ZERO))
+                    .setLocked(databaseResult.getBoolean("locked").orElse(false))
+                    .setIgnored(databaseResult.getBoolean("ignored").orElse(false))
+                    .setDescription(databaseResult.getString("description").orElse(""))
+                    .setGeneratedSchematics(databaseResult.getInt("generated_schematics").orElse(0))
+                    .setUnlockedWorlds(databaseResult.getInt("unlocked_worlds").orElse(0))
+                    .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000L));
+
+            databaseResult.getString("dirty_chunks").ifPresent(dirtyChunks -> {
+                IslandsDeserializer.deserializeDirtyChunks(builder, dirtyChunks);
+            });
+
+            databaseResult.getString("block_counts").ifPresent(blockCounts -> {
+                IslandsDeserializer.deserializeBlockCounts(builder, blockCounts);
+            });
+
+            databaseResult.getString("entity_counts").ifPresent(entityCounts -> {
+                IslandsDeserializer.deserializeEntityCounts(builder, entityCounts);
+            });
+
+            plugin.getGrid().getIslandsContainer().addIsland(builder.build());
+
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST  , ignoreCancelled = true)
+    private void onPlayerJoinLoad(PlayerJoinEvent e) {
+        loadPlayer(e.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

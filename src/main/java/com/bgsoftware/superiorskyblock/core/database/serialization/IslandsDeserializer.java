@@ -2,6 +2,7 @@ package com.bgsoftware.superiorskyblock.core.database.serialization;
 
 import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
 import com.bgsoftware.superiorskyblock.api.data.DatabaseBridge;
+import com.bgsoftware.superiorskyblock.api.data.DatabaseFilter;
 import com.bgsoftware.superiorskyblock.api.enums.Rating;
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.island.IslandFlag;
@@ -48,8 +49,8 @@ public class IslandsDeserializer {
 
     }
 
-    public static void deserializeMembers(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_members", membersRow -> {
+    public static void deserializeMembers(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_members", islandFilter, membersRow -> {
             DatabaseResult members = new DatabaseResult(membersRow);
 
             Optional<UUID> uuid = members.getUUID("island");
@@ -81,8 +82,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeBanned(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_bans", bansRow -> {
+    public static void deserializeBanned(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_bans", islandFilter, bansRow -> {
             DatabaseResult bans = new DatabaseResult(bansRow);
 
             Optional<UUID> uuid = bans.getUUID("island");
@@ -108,8 +109,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeVisitors(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_visitors", visitorsRow -> {
+    public static void deserializeVisitors(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_visitors", islandFilter, visitorsRow -> {
             DatabaseResult visitors = new DatabaseResult(visitorsRow);
 
             Optional<UUID> islandUUID = visitors.getUUID("island");
@@ -136,8 +137,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializePlayerPermissions(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_player_permissions", playerPermissionRow -> {
+    public static void deserializePlayerPermissions(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_player_permissions", islandFilter, playerPermissionRow -> {
             DatabaseResult playerPermissions = new DatabaseResult(playerPermissionRow);
 
             Optional<UUID> uuid = playerPermissions.getUUID("island");
@@ -181,8 +182,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeRolePermissions(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_role_permissions", rolePermissionsRow -> {
+    public static void deserializeRolePermissions(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_role_permissions", islandFilter, rolePermissionsRow -> {
             DatabaseResult rolePermissions = new DatabaseResult(rolePermissionsRow);
 
             Optional<UUID> uuid = rolePermissions.getUUID("island");
@@ -214,8 +215,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeUpgrades(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_upgrades", upgradesRow -> {
+    public static void deserializeUpgrades(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_upgrades", islandFilter, upgradesRow -> {
             DatabaseResult upgrades = new DatabaseResult(upgradesRow);
 
             Optional<UUID> uuid = upgrades.getUUID("island");
@@ -241,8 +242,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeWarps(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_warps", islandWarpsRow -> {
+    public static void deserializeWarps(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_warps", islandFilter, islandWarpsRow -> {
             DatabaseResult islandWarp = new DatabaseResult(islandWarpsRow);
 
             Optional<UUID> uuid = islandWarp.getUUID("island");
@@ -317,8 +318,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeBlockLimits(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_block_limits", blockLimitRow -> {
+    public static void deserializeBlockLimits(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_block_limits", islandFilter, blockLimitRow -> {
             DatabaseResult blockLimits = new DatabaseResult(blockLimitRow);
 
             Optional<UUID> uuid = blockLimits.getUUID("island");
@@ -344,8 +345,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeEntityLimits(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_entity_limits", entityLimitsRow -> {
+    public static void deserializeEntityLimits(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_entity_limits", islandFilter, entityLimitsRow -> {
             DatabaseResult entityLimits = new DatabaseResult(entityLimitsRow);
 
             Optional<UUID> uuid = entityLimits.getUUID("island");
@@ -371,8 +372,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeRatings(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_ratings", ratingsRow -> {
+    public static void deserializeRatings(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_ratings", islandFilter, ratingsRow -> {
             DatabaseResult ratings = new DatabaseResult(ratingsRow);
 
             Optional<UUID> islandUUID = ratings.getUUID("island");
@@ -410,8 +411,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeMissions(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_missions", missionsRow -> {
+    public static void deserializeMissions(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_missions", islandFilter, missionsRow -> {
             DatabaseResult missions = new DatabaseResult(missionsRow);
 
             Optional<UUID> uuid = missions.getUUID("island");
@@ -443,8 +444,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeIslandFlags(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_flags", islandFlagRow -> {
+    public static void deserializeIslandFlags(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_flags", islandFilter, islandFlagRow -> {
             DatabaseResult islandFlagResult = new DatabaseResult(islandFlagRow);
 
             Optional<UUID> uuid = islandFlagResult.getUUID("island");
@@ -476,8 +477,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeGenerators(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_generators", generatorsRow -> {
+    public static void deserializeGenerators(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_generators", islandFilter, generatorsRow -> {
             DatabaseResult generators = new DatabaseResult(generatorsRow);
 
             Optional<UUID> uuid = generators.getUUID("island");
@@ -510,8 +511,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeIslandHomes(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_homes", islandHomesRow -> {
+    public static void deserializeIslandHomes(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_homes", islandFilter, islandHomesRow -> {
             DatabaseResult islandHomes = new DatabaseResult(islandHomesRow);
 
             Optional<UUID> uuid = islandHomes.getUUID("island");
@@ -538,8 +539,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeVisitorHomes(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_visitor_homes", islandVisitorHomesRow -> {
+    public static void deserializeVisitorHomes(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_visitor_homes", islandFilter, islandVisitorHomesRow -> {
             DatabaseResult islandVisitorHomes = new DatabaseResult(islandVisitorHomesRow);
 
             Optional<UUID> uuid = islandVisitorHomes.getUUID("island");
@@ -566,8 +567,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeEffects(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_effects", islandEffectRow -> {
+    public static void deserializeEffects(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_effects", islandFilter, islandEffectRow -> {
             DatabaseResult islandEffects = new DatabaseResult(islandEffectRow);
 
             Optional<UUID> uuid = islandEffects.getUUID("island");
@@ -594,8 +595,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeIslandChest(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_chests", islandChestsRow -> {
+    public static void deserializeIslandChest(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_chests", islandFilter, islandChestsRow -> {
             DatabaseResult islandChests = new DatabaseResult(islandChestsRow);
 
             Optional<UUID> uuid = islandChests.getUUID("island");
@@ -639,8 +640,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeRoleLimits(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_role_limits", roleLimitRaw -> {
+    public static void deserializeRoleLimits(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_role_limits", islandFilter, roleLimitRaw -> {
             DatabaseResult roleLimits = new DatabaseResult(roleLimitRaw);
 
             Optional<UUID> uuid = roleLimits.getUUID("island");
@@ -666,8 +667,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeWarpCategories(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_warp_categories", warpCategoryRow -> {
+    public static void deserializeWarpCategories(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_warp_categories", islandFilter, warpCategoryRow -> {
             DatabaseResult warpCategory = new DatabaseResult(warpCategoryRow);
 
             Optional<UUID> uuid = warpCategory.getUUID("island");
@@ -688,8 +689,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeIslandBank(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_banks", islandBankRow -> {
+    public static void deserializeIslandBank(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_banks", islandFilter, islandBankRow -> {
             DatabaseResult islandBank = new DatabaseResult(islandBankRow);
 
             Optional<UUID> uuid = islandBank.getUUID("island");
@@ -713,8 +714,8 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeIslandSettings(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_settings", islandSettingsRow -> {
+    public static void deserializeIslandSettings(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_settings", islandFilter, islandSettingsRow -> {
             DatabaseResult islandSettings = new DatabaseResult(islandSettingsRow);
 
             Optional<String> island = islandSettings.getString("island");
@@ -737,9 +738,9 @@ public class IslandsDeserializer {
         });
     }
 
-    public static void deserializeBankTransactions(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
+    public static void deserializeBankTransactions(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
         if (BuiltinModules.BANK.bankLogs && BuiltinModules.BANK.cacheAllLogs) {
-            databaseBridge.loadAllObjects("bank_transactions", bankTransactionRow -> {
+            databaseBridge.loadObject("bank_transactions", islandFilter, bankTransactionRow -> {
                 DatabaseResult bankTransaction = new DatabaseResult(bankTransactionRow);
 
                 Optional<UUID> uuid = bankTransaction.getUUID("island");
@@ -754,8 +755,8 @@ public class IslandsDeserializer {
         }
     }
 
-    public static void deserializePersistentDataContainer(DatabaseBridge databaseBridge, DatabaseCache<Island.Builder> databaseCache) {
-        databaseBridge.loadAllObjects("islands_custom_data", customDataRow -> {
+    public static void deserializePersistentDataContainer(DatabaseBridge databaseBridge, DatabaseFilter islandFilter, DatabaseCache<Island.Builder> databaseCache) {
+        databaseBridge.loadObject("islands_custom_data", islandFilter, customDataRow -> {
             DatabaseResult customData = new DatabaseResult(customDataRow);
 
             Optional<UUID> uuid = customData.getUUID("island");

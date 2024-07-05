@@ -49,6 +49,7 @@ public class StackedBlocksManagerImpl extends Manager implements StackedBlocksMa
 
         Log.info("Starting to load stacked blocks...");
 
+        //TODO Load when world loaded.
         AtomicBoolean updateBlockKeys = new AtomicBoolean(false);
 
         databaseBridge.loadAllObjects("stacked_blocks", _resultSet -> {

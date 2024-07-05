@@ -107,145 +107,145 @@ public class DataManager extends Manager {
 
     private void loadPlayers() {
         Log.info("Starting to load players...");
-
-        DatabaseBridge playersLoader = PlayersDatabaseBridge.getGlobalPlayersBridge();
-
-        DatabaseCache<SuperiorPlayer.Builder> databaseCache = new DatabaseCache<>();
-        AtomicInteger playersCount = new AtomicInteger();
-        long startTime = System.currentTimeMillis();
-
-        PlayersDeserializer.deserializeMissions(playersLoader, databaseCache);
-        PlayersDeserializer.deserializePlayerSettings(playersLoader, databaseCache);
-        PlayersDeserializer.deserializePersistentDataContainer(playersLoader, databaseCache);
-
-        playersLoader.loadAllObjects("players", resultSetRaw -> {
-            DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
-
-            Optional<UUID> uuid = databaseResult.getUUID("uuid");
-            if (!uuid.isPresent()) {
-                Log.warn("Cannot load player with null uuid, skipping...");
-                return;
-            }
-
-            if (uuid.get().equals(CONSOLE_UUID)) {
-                Log.warn("Cannot load player with uuid 0 (it is reserved to CONSOLE), skipping...");
-                return;
-            }
-
-            plugin.getPlayers().getPlayersContainer().addPlayer(databaseCache.computeIfAbsentInfo(uuid.get(), SuperiorPlayer::newBuilder)
-                    .setUniqueId(uuid.get())
-                    .setName(databaseResult.getString("last_used_name").orElse("null"))
-                    .setDisbands(databaseResult.getInt("disbands").orElse(0))
-                    .setTextureValue(databaseResult.getString("last_used_skin").orElse(""))
-                    .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000))
-                    .build());
-
-            playersCount.incrementAndGet();
-        });
-
-        long endTime = System.currentTimeMillis();
-
-        Log.info("Finished loading " + playersCount.get() + " players (Took " + (endTime - startTime) + "ms)");
+//
+//        DatabaseBridge playersLoader = PlayersDatabaseBridge.getGlobalPlayersBridge();
+//
+//        DatabaseCache<SuperiorPlayer.Builder> databaseCache = new DatabaseCache<>();
+//        AtomicInteger playersCount = new AtomicInteger();
+//        long startTime = System.currentTimeMillis();
+//
+//        PlayersDeserializer.deserializeMissions(playersLoader, databaseCache);
+//        PlayersDeserializer.deserializePlayerSettings(playersLoader, databaseCache);
+//        PlayersDeserializer.deserializePersistentDataContainer(playersLoader, databaseCache);
+//
+//        playersLoader.loadAllObjects("players", resultSetRaw -> {
+//            DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
+//
+//            Optional<UUID> uuid = databaseResult.getUUID("uuid");
+//            if (!uuid.isPresent()) {
+//                Log.warn("Cannot load player with null uuid, skipping...");
+//                return;
+//            }
+//
+//            if (uuid.get().equals(CONSOLE_UUID)) {
+//                Log.warn("Cannot load player with uuid 0 (it is reserved to CONSOLE), skipping...");
+//                return;
+//            }
+//
+//            plugin.getPlayers().getPlayersContainer().addPlayer(databaseCache.computeIfAbsentInfo(uuid.get(), SuperiorPlayer::newBuilder)
+//                    .setUniqueId(uuid.get())
+//                    .setName(databaseResult.getString("last_used_name").orElse("null"))
+//                    .setDisbands(databaseResult.getInt("disbands").orElse(0))
+//                    .setTextureValue(databaseResult.getString("last_used_skin").orElse(""))
+//                    .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000))
+//                    .build());
+//
+//            playersCount.incrementAndGet();
+//        });
+//
+//        long endTime = System.currentTimeMillis();
+//
+//        Log.info("Finished loading " + playersCount.get() + " players (Took " + (endTime - startTime) + "ms)");
     }
 
     private void loadIslands() {
         Log.info("Starting to load islands...");
-
-        DatabaseBridge islandsLoader = plugin.getFactory().createDatabaseBridge((Island) null);
-
-        DatabaseCache<Island.Builder> databaseCache = new DatabaseCache<>();
-        AtomicInteger islandsCount = new AtomicInteger();
-        long startTime = System.currentTimeMillis();
-
-        IslandsDeserializer.deserializeIslandHomes(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeMembers(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeBanned(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializePlayerPermissions(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeRolePermissions(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeUpgrades(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeWarps(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeBlockLimits(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeRatings(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeMissions(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeIslandFlags(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeGenerators(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeVisitors(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeEntityLimits(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeEffects(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeIslandChest(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeRoleLimits(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeWarpCategories(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeIslandBank(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeVisitorHomes(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeIslandSettings(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializeBankTransactions(islandsLoader, databaseCache);
-        IslandsDeserializer.deserializePersistentDataContainer(islandsLoader, databaseCache);
-
-        islandsLoader.loadAllObjects("islands", resultSetRaw -> {
-            DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
-
-            Optional<UUID> uuid = databaseResult.getUUID("uuid");
-            if (!uuid.isPresent()) {
-                Log.warn("Cannot load island with invalid uuid, skipping...");
-                return;
-            }
-
-            Optional<UUID> ownerUUID = databaseResult.getUUID("owner");
-            if (!ownerUUID.isPresent()) {
-                Log.warn("Cannot load island with invalid owner uuid, skipping...");
-                return;
-            }
-
-            SuperiorPlayer owner = plugin.getPlayers().getSuperiorPlayer(ownerUUID.get(), false);
-            if (owner == null) {
-                Log.warn("Cannot load island with unrecognized owner uuid: " + ownerUUID.get() + ", skipping...");
-                return;
-            }
-
-            Optional<Location> center = databaseResult.getString("center").map(Serializers.LOCATION_SERIALIZER::deserialize);
-            if (!center.isPresent()) {
-                Log.warn("Cannot load island with invalid center, skipping...");
-                return;
-            }
-
-            Island.Builder builder = databaseCache.computeIfAbsentInfo(uuid.get(), IslandBuilderImpl::new)
-                    .setOwner(owner)
-                    .setUniqueId(uuid.get())
-                    .setCenter(center.get())
-                    .setName(databaseResult.getString("name").orElse(""))
-                    .setSchematicName(databaseResult.getString("island_type").orElse(null))
-                    .setCreationTime(databaseResult.getLong("creation_time").orElse(System.currentTimeMillis() / 1000L))
-                    .setDiscord(databaseResult.getString("discord").orElse("None"))
-                    .setPaypal(databaseResult.getString("paypal").orElse("None"))
-                    .setBonusWorth(databaseResult.getBigDecimal("worth_bonus").orElse(BigDecimal.ZERO))
-                    .setBonusLevel(databaseResult.getBigDecimal("levels_bonus").orElse(BigDecimal.ZERO))
-                    .setLocked(databaseResult.getBoolean("locked").orElse(false))
-                    .setIgnored(databaseResult.getBoolean("ignored").orElse(false))
-                    .setDescription(databaseResult.getString("description").orElse(""))
-                    .setGeneratedSchematics(databaseResult.getInt("generated_schematics").orElse(0))
-                    .setUnlockedWorlds(databaseResult.getInt("unlocked_worlds").orElse(0))
-                    .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000L));
-
-            databaseResult.getString("dirty_chunks").ifPresent(dirtyChunks -> {
-                IslandsDeserializer.deserializeDirtyChunks(builder, dirtyChunks);
-            });
-
-            databaseResult.getString("block_counts").ifPresent(blockCounts -> {
-                IslandsDeserializer.deserializeBlockCounts(builder, blockCounts);
-            });
-
-            databaseResult.getString("entity_counts").ifPresent(entityCounts -> {
-                IslandsDeserializer.deserializeEntityCounts(builder, entityCounts);
-            });
-
-            plugin.getGrid().getIslandsContainer().addIsland(builder.build());
-
-            islandsCount.incrementAndGet();
-        });
-
-        long endTime = System.currentTimeMillis();
-
-        Log.info("Finished loading " + islandsCount.get() + " islands (Took " + (endTime - startTime) + "ms)");
+//
+//        DatabaseBridge islandsLoader = plugin.getFactory().createDatabaseBridge((Island) null);
+//
+//        DatabaseCache<Island.Builder> databaseCache = new DatabaseCache<>();
+//        AtomicInteger islandsCount = new AtomicInteger();
+//        long startTime = System.currentTimeMillis();
+//
+//        IslandsDeserializer.deserializeIslandHomes(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeMembers(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeBanned(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializePlayerPermissions(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeRolePermissions(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeUpgrades(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeWarps(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeBlockLimits(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeRatings(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeMissions(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeIslandFlags(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeGenerators(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeVisitors(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeEntityLimits(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeEffects(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeIslandChest(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeRoleLimits(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeWarpCategories(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeIslandBank(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeVisitorHomes(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeIslandSettings(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializeBankTransactions(islandsLoader, databaseCache);
+//        IslandsDeserializer.deserializePersistentDataContainer(islandsLoader, databaseCache);
+//
+//        islandsLoader.loadAllObjects("islands", resultSetRaw -> {
+//            DatabaseResult databaseResult = new DatabaseResult(resultSetRaw);
+//
+//            Optional<UUID> uuid = databaseResult.getUUID("uuid");
+//            if (!uuid.isPresent()) {
+//                Log.warn("Cannot load island with invalid uuid, skipping...");
+//                return;
+//            }
+//
+//            Optional<UUID> ownerUUID = databaseResult.getUUID("owner");
+//            if (!ownerUUID.isPresent()) {
+//                Log.warn("Cannot load island with invalid owner uuid, skipping...");
+//                return;
+//            }
+//
+//            SuperiorPlayer owner = plugin.getPlayers().getSuperiorPlayer(ownerUUID.get(), false);
+//            if (owner == null) {
+//                Log.warn("Cannot load island with unrecognized owner uuid: " + ownerUUID.get() + ", skipping...");
+//                return;
+//            }
+//
+//            Optional<Location> center = databaseResult.getString("center").map(Serializers.LOCATION_SERIALIZER::deserialize);
+//            if (!center.isPresent()) {
+//                Log.warn("Cannot load island with invalid center, skipping...");
+//                return;
+//            }
+//
+//            Island.Builder builder = databaseCache.computeIfAbsentInfo(uuid.get(), IslandBuilderImpl::new)
+//                    .setOwner(owner)
+//                    .setUniqueId(uuid.get())
+//                    .setCenter(center.get())
+//                    .setName(databaseResult.getString("name").orElse(""))
+//                    .setSchematicName(databaseResult.getString("island_type").orElse(null))
+//                    .setCreationTime(databaseResult.getLong("creation_time").orElse(System.currentTimeMillis() / 1000L))
+//                    .setDiscord(databaseResult.getString("discord").orElse("None"))
+//                    .setPaypal(databaseResult.getString("paypal").orElse("None"))
+//                    .setBonusWorth(databaseResult.getBigDecimal("worth_bonus").orElse(BigDecimal.ZERO))
+//                    .setBonusLevel(databaseResult.getBigDecimal("levels_bonus").orElse(BigDecimal.ZERO))
+//                    .setLocked(databaseResult.getBoolean("locked").orElse(false))
+//                    .setIgnored(databaseResult.getBoolean("ignored").orElse(false))
+//                    .setDescription(databaseResult.getString("description").orElse(""))
+//                    .setGeneratedSchematics(databaseResult.getInt("generated_schematics").orElse(0))
+//                    .setUnlockedWorlds(databaseResult.getInt("unlocked_worlds").orElse(0))
+//                    .setLastTimeUpdated(databaseResult.getLong("last_time_updated").orElse(System.currentTimeMillis() / 1000L));
+//
+//            databaseResult.getString("dirty_chunks").ifPresent(dirtyChunks -> {
+//                IslandsDeserializer.deserializeDirtyChunks(builder, dirtyChunks);
+//            });
+//
+//            databaseResult.getString("block_counts").ifPresent(blockCounts -> {
+//                IslandsDeserializer.deserializeBlockCounts(builder, blockCounts);
+//            });
+//
+//            databaseResult.getString("entity_counts").ifPresent(entityCounts -> {
+//                IslandsDeserializer.deserializeEntityCounts(builder, entityCounts);
+//            });
+//
+//            plugin.getGrid().getIslandsContainer().addIsland(builder.build());
+//
+//            islandsCount.incrementAndGet();
+//        });
+//
+//        long endTime = System.currentTimeMillis();
+//
+//        Log.info("Finished loading " + islandsCount.get() + " islands (Took " + (endTime - startTime) + "ms)");
     }
 
 
