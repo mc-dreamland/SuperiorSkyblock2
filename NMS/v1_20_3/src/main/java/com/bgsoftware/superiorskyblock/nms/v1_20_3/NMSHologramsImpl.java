@@ -65,7 +65,11 @@ public class NMSHologramsImpl implements NMSHolograms {
 
         @Override
         public void setHologramName(String name) {
-            super.setCustomName(CraftChatMessage.fromStringOrNull(name));
+            if (name.contains("{")) {
+                super.setCustomName(CraftChatMessage.fromJSONOrNull(name));
+            } else {
+                super.setCustomName(CraftChatMessage.fromStringOrNull(name));
+            }
         }
 
         @Override

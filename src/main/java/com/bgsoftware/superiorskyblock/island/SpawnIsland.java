@@ -618,6 +618,9 @@ public class SpawnIsland implements Island {
 
     @Override
     public boolean isInside(Location location) {
+        if (location.getWorld() == null) {
+            return false;
+        }
         return location.getWorld().equals(this.spawnWorld) &&
                 this.islandArea.intercepts(location.getBlockX(), location.getBlockZ());
     }

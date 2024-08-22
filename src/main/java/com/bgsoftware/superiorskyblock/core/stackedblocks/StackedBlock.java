@@ -12,6 +12,8 @@ import com.bgsoftware.superiorskyblock.core.key.ConstantKeys;
 import com.bgsoftware.superiorskyblock.core.key.Keys;
 import org.bukkit.Location;
 
+import java.util.Locale;
+
 public class StackedBlock {
 
     private static final SuperiorSkyblockPlugin plugin = SuperiorSkyblockPlugin.getPlugin();
@@ -86,11 +88,8 @@ public class StackedBlock {
         if (hologram == null)
             hologram = hologramsService.get().createHologram(getLocation().add(0.5, 1, 0.5));
 
-        hologram.setHologramName(plugin.getSettings().getStackedBlocks().getCustomName()
-                .replace("{0}", String.valueOf(amount))
-                .replace("{1}", Formatters.CAPITALIZED_FORMATTER.format(blockKey.getGlobalKey()))
-                .replace("{2}", Formatters.NUMBER_FORMATTER.format(amount))
-        );
+        String format1 = String.format("{\"color\":\"green\",\"text\":\"x%s \",\"extra\":[{\"translate\":\"block.minecraft.%s\"}]}", amount, blockKey.getGlobalKey().toLowerCase(Locale.ROOT));
+        hologram.setHologramName(format1);
     }
 
     public void removeHologram() {
