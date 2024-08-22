@@ -5,6 +5,7 @@ import com.bgsoftware.common.reflection.ReflectField;
 import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.objects.Pair;
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import com.bgsoftware.superiorskyblock.core.ChunkPosition;
 import com.bgsoftware.superiorskyblock.core.collections.CollectionsFactory;
 import com.bgsoftware.superiorskyblock.core.collections.view.Long2ObjectMapView;
@@ -77,9 +78,11 @@ public class WorldEditSessionImpl implements WorldEditSession {
     private final List<Pair<BlockPosition, CompoundTag>> blockEntities = new LinkedList<>();
     private final Set<ChunkCoordIntPair> lightenChunks = isStarLightInterface ? new HashSet<>() : Collections.emptySet();
     private final WorldServer worldServer;
+    private final Dimension dimension;
 
     public WorldEditSessionImpl(WorldServer worldServer) {
         this.worldServer = worldServer;
+        this.dimension = plugin.getProviders().getWorldsProvider().getIslandsWorldDimension(worldServer.getWorld());
     }
 
     @Override
@@ -182,8 +185,7 @@ public class WorldEditSessionImpl implements WorldEditSession {
         BiomeBase[] biomes = BIOME_BASE_ARRAY.get(chunk.getBiomeIndex());
         if (biomes != null) {
             IRegistry<BiomeBase> biomesRegistry = worldServer.r().b(IRegistry.ay);
-            BiomeBase biome = CraftBlock.biomeToBiomeBase(biomesRegistry,
-                    IslandUtils.getDefaultWorldBiome(worldServer.getWorld().getEnvironment()));
+            BiomeBase biome = CraftBlock.biomeToBiomeBase(biomesRegistry, IslandUtils.getDefaultWorldBiome(this.dimension));
             Arrays.fill(biomes, biome);
         }
 
@@ -293,7 +295,12 @@ public class WorldEditSessionImpl implements WorldEditSession {
             chunkGenerator.buildBase(region, tempChunk);
 
             // We want to copy the level chunk sections back
-            System.arraycopy(tempChunk.getSections(), 0, this.chunkSections, 0, this.chunkSections.length);
+            ChunkSection[] tempChunkSections = tempChunk.getSections();
+            for (int i = 0; i < Math.min(this.chunkSections.length, tempChunkSections.length); ++i) {
+                ChunkSection chunkSection = tempChunkSections[i];
+                if (chunkSection != null && chunkSection != Chunk.a)
+                    this.chunkSections[i] = chunkSection;
+            }
         }
 
         private void createHeightmaps(ProtoChunk tempChunk) {

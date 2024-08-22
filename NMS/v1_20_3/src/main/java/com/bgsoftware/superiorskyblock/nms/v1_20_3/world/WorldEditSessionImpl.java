@@ -4,6 +4,7 @@ import com.bgsoftware.common.annotations.Nullable;
 import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.objects.Pair;
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
 import com.bgsoftware.superiorskyblock.core.ChunkPosition;
 import com.bgsoftware.superiorskyblock.core.Text;
 import com.bgsoftware.superiorskyblock.core.collections.CollectionsFactory;
@@ -82,9 +83,11 @@ public class WorldEditSessionImpl implements WorldEditSession {
     private final List<Pair<BlockPos, CompoundTag>> blockEntities = new LinkedList<>();
     private final Set<ChunkPos> lightenChunks = isStarLightInterface ? new HashSet<>() : Collections.emptySet();
     private final ServerLevel serverLevel;
+    private final Dimension dimension;
 
     public WorldEditSessionImpl(ServerLevel serverLevel) {
         this.serverLevel = serverLevel;
+        this.dimension = plugin.getProviders().getWorldsProvider().getIslandsWorldDimension(serverLevel.getWorld());
     }
 
     @Override
@@ -282,7 +285,7 @@ public class WorldEditSessionImpl implements WorldEditSession {
 
         private void createChunkSections(Registry<Biome> biomesRegistry) {
             Holder<Biome> biome = CraftBiome.bukkitToMinecraftHolder(
-                    IslandUtils.getDefaultWorldBiome(serverLevel.getWorld().getEnvironment()));
+                    IslandUtils.getDefaultWorldBiome(WorldEditSessionImpl.this.dimension));
 
             for (int i = 0; i < this.chunkSections.length; ++i) {
                 PalettedContainer<Holder<Biome>> biomesContainer = new PalettedContainer<>(biomesRegistry.asHolderIdMap(),
@@ -313,7 +316,12 @@ public class WorldEditSessionImpl implements WorldEditSession {
                     tempChunk);
 
             // We want to copy the level chunk sections back
-            System.arraycopy(tempChunk.getSections(), 0, this.chunkSections, 0, this.chunkSections.length);
+            LevelChunkSection[] tempChunkSections = tempChunk.getSections();
+            for (int i = 0; i < Math.min(this.chunkSections.length, tempChunkSections.length); ++i) {
+                LevelChunkSection chunkSection = tempChunkSections[i];
+                if (chunkSection != null)
+                    this.chunkSections[i] = chunkSection;
+            }
         }
 
         private void createHeightmaps(ProtoChunk tempChunk) {

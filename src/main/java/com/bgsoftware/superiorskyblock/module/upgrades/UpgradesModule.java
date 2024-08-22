@@ -12,6 +12,8 @@ import com.bgsoftware.superiorskyblock.api.upgrades.cost.UpgradeCostLoader;
 import com.bgsoftware.superiorskyblock.core.collections.ArrayMap;
 import com.bgsoftware.superiorskyblock.core.collections.CollectionsFactory;
 import com.bgsoftware.superiorskyblock.core.collections.view.Int2IntMapView;
+import com.bgsoftware.superiorskyblock.api.world.Dimension;
+import com.bgsoftware.superiorskyblock.core.collections.EnumerateMap;
 import com.bgsoftware.superiorskyblock.core.formatting.Formatters;
 import com.bgsoftware.superiorskyblock.core.key.KeyIndicator;
 import com.bgsoftware.superiorskyblock.core.key.KeyMaps;
@@ -36,7 +38,6 @@ import com.bgsoftware.superiorskyblock.module.upgrades.type.UpgradeTypeEntityLim
 import com.bgsoftware.superiorskyblock.module.upgrades.type.UpgradeTypeIslandEffects;
 import com.bgsoftware.superiorskyblock.module.upgrades.type.UpgradeTypeMobDrops;
 import com.bgsoftware.superiorskyblock.module.upgrades.type.UpgradeTypeSpawnerRates;
-import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffectType;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -223,7 +225,7 @@ public class UpgradesModule extends BuiltinModule {
 
         Value<BigDecimal> bankLimit = Value.syncedFixed(new BigDecimal(levelSection.getString("bank-limit", "-1")));
         KeyMap<Integer> blockLimits = KeyMaps.createArrayMap(KeyIndicator.MATERIAL);
-        if (levelSection.contains("block-limits")) {
+        if (levelSection.isConfigurationSection("block-limits")) {
             for (String block : levelSection.getConfigurationSection("block-limits").getKeys(false)) {
                 Key blockKey = Keys.ofMaterialAndData(block);
                 blockLimits.put(blockKey, levelSection.getInt("block-limits." + block));
@@ -231,27 +233,27 @@ public class UpgradesModule extends BuiltinModule {
             }
         }
         KeyMap<Integer> entityLimits = KeyMaps.createArrayMap(KeyIndicator.ENTITY_TYPE);
-        if (levelSection.contains("entity-limits")) {
+        if (levelSection.isConfigurationSection("entity-limits")) {
             for (String entity : levelSection.getConfigurationSection("entity-limits").getKeys(false))
                 entityLimits.put(Keys.ofEntityType(entity), levelSection.getInt("entity-limits." + entity));
         }
-        EnumMap<World.Environment, Map<Key, Integer>> generatorRates = new EnumMap<>(World.Environment.class);
-        if (levelSection.contains("generator-rates")) {
+        EnumerateMap<Dimension, Map<Key, Integer>> generatorRates = new EnumerateMap<>(Dimension.values());
+        if (levelSection.isConfigurationSection("generator-rates")) {
             for (String blockOrEnv : levelSection.getConfigurationSection("generator-rates").getKeys(false)) {
                 try {
-                    World.Environment environment = World.Environment.valueOf(blockOrEnv.toUpperCase(Locale.ENGLISH));
+                    Dimension dimension = Dimension.getByName(blockOrEnv.toUpperCase(Locale.ENGLISH));
                     for (String block : levelSection.getConfigurationSection("generator-rates." + blockOrEnv).getKeys(false)) {
-                        generatorRates.computeIfAbsent(environment, e -> KeyMaps.createArrayMap(KeyIndicator.MATERIAL)).put(
+                        generatorRates.computeIfAbsent(dimension, e -> KeyMaps.createArrayMap(KeyIndicator.MATERIAL)).put(
                                 Keys.ofMaterialAndData(block), levelSection.getInt("generator-rates." + blockOrEnv + "." + block));
                     }
                 } catch (Exception ex) {
-                    generatorRates.computeIfAbsent(plugin.getSettings().getWorlds().getDefaultWorld(), e -> KeyMaps.createArrayMap(KeyIndicator.MATERIAL))
+                    generatorRates.computeIfAbsent(plugin.getSettings().getWorlds().getDefaultWorldDimension(), e -> KeyMaps.createArrayMap(KeyIndicator.MATERIAL))
                             .put(Keys.ofMaterialAndData(blockOrEnv), levelSection.getInt("generator-rates." + blockOrEnv));
                 }
             }
         }
         Map<PotionEffectType, Integer> islandEffects = new ArrayMap<>();
-        if (levelSection.contains("island-effects")) {
+        if (levelSection.isConfigurationSection("island-effects")) {
             for (String effect : levelSection.getConfigurationSection("island-effects").getKeys(false)) {
                 PotionEffectType potionEffectType = PotionEffectType.getByName(effect);
                 if (potionEffectType != null)
@@ -259,7 +261,7 @@ public class UpgradesModule extends BuiltinModule {
             }
         }
         Int2IntMapView rolesLimits = CollectionsFactory.createInt2IntArrayMap();
-        if (levelSection.contains("role-limits")) {
+        if (levelSection.isConfigurationSection("role-limits")) {
             for (String roleId : levelSection.getConfigurationSection("role-limits").getKeys(false)) {
                 try {
                     rolesLimits.put(Integer.parseInt(roleId), levelSection.getInt("role-limits." + roleId));

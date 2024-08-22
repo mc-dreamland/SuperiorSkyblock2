@@ -5,14 +5,15 @@ import com.bgsoftware.superiorskyblock.SuperiorSkyblockPlugin;
 import com.bgsoftware.superiorskyblock.api.island.Island;
 import com.bgsoftware.superiorskyblock.api.key.Key;
 import com.bgsoftware.superiorskyblock.api.key.KeyMap;
+import com.bgsoftware.superiorskyblock.api.objects.Pair;
 import com.bgsoftware.superiorskyblock.core.CalculatedChunk;
 import com.bgsoftware.superiorskyblock.core.ChunkPosition;
 import com.bgsoftware.superiorskyblock.core.Counter;
-import com.bgsoftware.superiorskyblock.core.SequentialListBuilder;
 import com.bgsoftware.superiorskyblock.core.key.KeyIndicator;
 import com.bgsoftware.superiorskyblock.core.key.KeyMaps;
 import com.bgsoftware.superiorskyblock.core.key.Keys;
 import com.bgsoftware.superiorskyblock.core.logging.Log;
+import com.bgsoftware.superiorskyblock.core.threads.BukkitExecutor;
 import com.bgsoftware.superiorskyblock.nms.NMSChunks;
 import com.bgsoftware.superiorskyblock.nms.v1_16_R3.chunks.CropsTickingTileEntity;
 import com.bgsoftware.superiorskyblock.nms.v1_16_R3.world.KeyBlocksCache;
@@ -60,7 +61,6 @@ import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -88,14 +88,7 @@ public class NMSChunksImpl implements NMSChunks {
         if (chunkPositions.isEmpty())
             return;
 
-        List<ChunkCoordIntPair> chunksCoords = new SequentialListBuilder<ChunkCoordIntPair>()
-                .build(chunkPositions, chunkPosition -> new ChunkCoordIntPair(chunkPosition.getX(), chunkPosition.getZ()));
-
-        WorldServer worldServer = ((CraftWorld) chunkPositions.get(0).getWorld()).getHandle();
-        IRegistry<BiomeBase> biomeBaseRegistry = worldServer.r().b(IRegistry.ay);
-        BiomeBase biomeBase = CraftBlock.biomeToBiomeBase(biomeBaseRegistry, biome);
-
-        NMSUtils.runActionOnChunks(worldServer, chunksCoords, true, new NMSUtils.ChunkCallback() {
+        NMSUtils.runActionOnChunks(chunkPositions, true, new NMSUtils.ChunkCallback() {
             @Override
             public void onLoadedChunk(Chunk chunk) {
                 ChunkCoordIntPair chunkCoords = chunk.getPos();
@@ -104,10 +97,13 @@ public class NMSChunksImpl implements NMSChunks {
                 if (biomeBases == null)
                     throw new RuntimeException("Error while receiving biome bases of chunk (" + chunkCoords.x + "," + chunkCoords.z + ").");
 
+                IRegistry<BiomeBase> biomeBaseRegistry = chunk.world.r().b(IRegistry.ay);
+                BiomeBase biomeBase = CraftBlock.biomeToBiomeBase(biomeBaseRegistry, biome);
+
                 Arrays.fill(biomeBases, biomeBase);
                 chunk.markDirty();
 
-                LightEngineThreaded lightEngineThreaded = (LightEngineThreaded) worldServer.e();
+                LightEngineThreaded lightEngineThreaded = (LightEngineThreaded) chunk.world.e();
 
                 PacketPlayOutUnloadChunk unloadChunkPacket = new PacketPlayOutUnloadChunk(chunkCoords.x, chunkCoords.z);
                 //noinspection deprecation
@@ -124,7 +120,11 @@ public class NMSChunksImpl implements NMSChunks {
             }
 
             @Override
-            public void onUnloadedChunk(ChunkCoordIntPair chunkPos, NBTTagCompound unloadedChunk) {
+            public void onUnloadedChunk(ChunkPosition chunkPosition, NBTTagCompound unloadedChunk) {
+                WorldServer worldServer = ((CraftWorld) chunkPosition.getWorld()).getHandle();
+                IRegistry<BiomeBase> biomeBaseRegistry = worldServer.r().b(IRegistry.ay);
+                BiomeBase biomeBase = CraftBlock.biomeToBiomeBase(biomeBaseRegistry, biome);
+
                 int[] biomes = unloadedChunk.hasKeyOfType("Biomes", 11) ? unloadedChunk.getIntArray("Biomes") : new int[256];
                 Arrays.fill(biomes, biomeBaseRegistry.a(biomeBase));
                 unloadedChunk.setIntArray("Biomes", biomes);
@@ -142,15 +142,10 @@ public class NMSChunksImpl implements NMSChunks {
         if (chunkPositions.isEmpty())
             return;
 
-        List<ChunkCoordIntPair> chunksCoords = new SequentialListBuilder<ChunkCoordIntPair>()
-                .build(chunkPositions, chunkPosition -> new ChunkCoordIntPair(chunkPosition.getX(), chunkPosition.getZ()));
-
         chunkPositions.forEach(chunkPosition -> island.markChunkEmpty(chunkPosition.getWorld(),
                 chunkPosition.getX(), chunkPosition.getZ(), false));
 
-        WorldServer worldServer = ((CraftWorld) chunkPositions.get(0).getWorld()).getHandle();
-
-        NMSUtils.runActionOnChunks(worldServer, chunksCoords, true, new NMSUtils.ChunkCallback() {
+        NMSUtils.runActionOnChunks(chunkPositions, true, new NMSUtils.ChunkCallback() {
             @Override
             public void onLoadedChunk(Chunk chunk) {
                 Arrays.fill(chunk.getSections(), Chunk.a);
@@ -163,7 +158,9 @@ public class NMSChunksImpl implements NMSChunks {
             }
 
             @Override
-            public void onUnloadedChunk(ChunkCoordIntPair chunkPos, NBTTagCompound unloadedChunk) {
+            public void onUnloadedChunk(ChunkPosition chunkPosition, NBTTagCompound unloadedChunk) {
+                WorldServer worldServer = ((CraftWorld) chunkPosition.getWorld()).getHandle();
+
                 NBTTagList sectionsList = new NBTTagList();
                 NBTTagList tileEntities = new NBTTagList();
 
@@ -172,7 +169,9 @@ public class NMSChunksImpl implements NMSChunks {
                 unloadedChunk.set("Entities", new NBTTagList());
 
                 if (!(worldServer.generator instanceof IslandsGenerator)) {
-                    ProtoChunk protoChunk = NMSUtils.createProtoChunk(chunkPos, worldServer);
+                    ChunkCoordIntPair chunkCoords = new ChunkCoordIntPair(chunkPosition.getX(), chunkPosition.getZ());
+
+                    ProtoChunk protoChunk = NMSUtils.createProtoChunk(chunkCoords, worldServer);
 
                     try {
                         CustomChunkGenerator customChunkGenerator = new CustomChunkGenerator(worldServer,
@@ -217,7 +216,7 @@ public class NMSChunksImpl implements NMSChunks {
     public CompletableFuture<List<CalculatedChunk>> calculateChunks(List<ChunkPosition> chunkPositions,
                                                                     Map<ChunkPosition, CalculatedChunk> unloadedChunksCache) {
         List<CalculatedChunk> allCalculatedChunks = new LinkedList<>();
-        List<ChunkCoordIntPair> chunksCoords = new LinkedList<>();
+        List<ChunkPosition> chunkPositionsToCalculate = new LinkedList<>();
 
         Iterator<ChunkPosition> chunkPositionsIterator = chunkPositions.iterator();
         while (chunkPositionsIterator.hasNext()) {
@@ -227,7 +226,7 @@ public class NMSChunksImpl implements NMSChunks {
                 allCalculatedChunks.add(cachedCalculatedChunk);
                 chunkPositionsIterator.remove();
             } else {
-                chunksCoords.add(new ChunkCoordIntPair(chunkPosition.getX(), chunkPosition.getZ()));
+                chunkPositionsToCalculate.add(chunkPosition);
             }
         }
 
@@ -236,9 +235,7 @@ public class NMSChunksImpl implements NMSChunks {
 
         CompletableFuture<List<CalculatedChunk>> completableFuture = new CompletableFuture<>();
 
-        WorldServer worldServer = ((CraftWorld) chunkPositions.get(0).getWorld()).getHandle();
-
-        NMSUtils.runActionOnChunks(worldServer, chunksCoords, false, new NMSUtils.ChunkCallback() {
+        NMSUtils.runActionOnChunks(chunkPositionsToCalculate, false, new NMSUtils.ChunkCallback() {
             @Override
             public void onLoadedChunk(Chunk chunk) {
                 ChunkPosition chunkPosition = ChunkPosition.of(chunk.getWorld().getWorld(), chunk.getPos().x, chunk.getPos().z);
@@ -246,7 +243,7 @@ public class NMSChunksImpl implements NMSChunks {
             }
 
             @Override
-            public void onUnloadedChunk(ChunkCoordIntPair chunkPos, NBTTagCompound unloadedChunk) {
+            public void onUnloadedChunk(ChunkPosition chunkPosition, NBTTagCompound unloadedChunk) {
                 NBTTagList sectionsList = unloadedChunk.getList("Sections", 10);
                 ChunkSection[] chunkSections = new ChunkSection[sectionsList.size()];
 
@@ -260,7 +257,6 @@ public class NMSChunksImpl implements NMSChunks {
                     }
                 }
 
-                ChunkPosition chunkPosition = ChunkPosition.of(worldServer.getWorld(), chunkPos.x, chunkPos.z);
                 CalculatedChunk calculatedChunk = calculateChunk(chunkPosition, chunkSections);
                 allCalculatedChunks.add(calculatedChunk);
                 unloadedChunksCache.put(chunkPosition, calculatedChunk);
@@ -276,15 +272,13 @@ public class NMSChunksImpl implements NMSChunks {
     }
 
     @Override
-    public CompletableFuture<KeyMap<Counter>> calculateChunkEntities(ChunkPosition chunkPosition) {
+    public CompletableFuture<KeyMap<Counter>> calculateChunkEntities(Collection<ChunkPosition> chunkPositions) {
         CompletableFuture<KeyMap<Counter>> completableFuture = new CompletableFuture<>();
 
-        WorldServer worldServer = ((CraftWorld) chunkPosition.getWorld()).getHandle();
-        ChunkCoordIntPair chunkCoord = new ChunkCoordIntPair(chunkPosition.getX(), chunkPosition.getZ());
-
         KeyMap<Counter> chunkEntities = KeyMaps.createArrayMap(KeyIndicator.ENTITY_TYPE);
+        List<Pair<WorldServer, NBTTagList>> unloadedEntityTags = new LinkedList<>();
 
-        NMSUtils.runActionOnChunks(worldServer, Collections.singletonList(chunkCoord), false, new NMSUtils.ChunkCallback() {
+        NMSUtils.runActionOnChunks(chunkPositions, false, new NMSUtils.ChunkCallback() {
             @Override
             public void onLoadedChunk(Chunk chunk) {
                 for (org.bukkit.entity.Entity bukkitEntity : chunk.getBukkitChunk().getEntities()) {
@@ -294,29 +288,36 @@ public class NMSChunksImpl implements NMSChunks {
             }
 
             @Override
-            public void onUnloadedChunk(ChunkCoordIntPair currChunkPos, NBTTagCompound entityData) {
-                for (NBTBase entityTag : entityData.getList("Entities", 10)) {
-                    EntityTypes<?> entityType = EntityTypes.a((NBTTagCompound) entityTag).orElse(null);
-                    if (entityType == null)
-                        continue;
-
-                    Entity fakeEntity = EntityTypes.a((NBTTagCompound) entityTag, worldServer).orElse(null);
-                    if (fakeEntity != null) {
-                        fakeEntity.valid = false;
-                        if (BukkitEntities.canBypassEntityLimit(fakeEntity.getBukkitEntity()))
-                            continue;
-                    }
-
-                    Key entityKey = Keys.of(Registry.ENTITY_TYPE.get(
-                            CraftNamespacedKey.fromMinecraft(EntityTypes.getName(entityType))));
-
-                    chunkEntities.computeIfAbsent(entityKey, k -> new Counter(0)).inc(1);
-                }
+            public void onUnloadedChunk(ChunkPosition chunkPosition, NBTTagCompound entityData) {
+                WorldServer worldServer = ((CraftWorld) chunkPosition.getWorld()).getHandle();
+                unloadedEntityTags.add(new Pair<>(worldServer, entityData.getList("Entities", 10)));
             }
 
             @Override
             public void onFinish() {
-                completableFuture.complete(chunkEntities);
+                BukkitExecutor.sync(() -> {
+                    for (Pair<WorldServer, NBTTagList> worldUnloadedEntityTagsPair : unloadedEntityTags) {
+                        for (NBTBase entityTag : worldUnloadedEntityTagsPair.getValue()) {
+                            EntityTypes<?> entityType = EntityTypes.a((NBTTagCompound) entityTag).orElse(null);
+                            if (entityType == null)
+                                continue;
+
+                            Entity fakeEntity = EntityTypes.a((NBTTagCompound) entityTag, worldUnloadedEntityTagsPair.getKey()).orElse(null);
+                            if (fakeEntity != null) {
+                                fakeEntity.valid = false;
+                                if (BukkitEntities.canBypassEntityLimit(fakeEntity.getBukkitEntity()))
+                                    continue;
+                            }
+
+                            Key entityKey = Keys.of(Registry.ENTITY_TYPE.get(
+                                    CraftNamespacedKey.fromMinecraft(EntityTypes.getName(entityType))));
+
+                            chunkEntities.computeIfAbsent(entityKey, k -> new Counter(0)).inc(1);
+                        }
+                    }
+
+                    completableFuture.complete(chunkEntities);
+                });
             }
         });
 
@@ -347,7 +348,8 @@ public class NMSChunksImpl implements NMSChunks {
             return;
 
         if (stop) {
-            CropsTickingTileEntity cropsTickingTileEntity = CropsTickingTileEntity.remove(((CraftChunk) chunk).getHandle().getPos());
+            CropsTickingTileEntity cropsTickingTileEntity = CropsTickingTileEntity.remove(
+                    ChunkCoordIntPair.pair(chunk.getX(), chunk.getZ()));
             World world = cropsTickingTileEntity == null ? null : cropsTickingTileEntity.getWorld();
             if (cropsTickingTileEntity != null && world != null)
                 world.tileEntityListTick.remove(cropsTickingTileEntity);
