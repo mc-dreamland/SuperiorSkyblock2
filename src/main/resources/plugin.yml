@@ -274,6 +274,8 @@ permissions:
             description: Set the block amount in a specific location.
           superior.admin.setblocklimit:
             description: Set block limit for another player's island.
+          superior.admin.addchestrow:
+            description: Add the chest rows for another player's island.
           superior.admin.setchestrow:
             description: Set the chest rows for another player's island.
           superior.admin.setcooplimit:

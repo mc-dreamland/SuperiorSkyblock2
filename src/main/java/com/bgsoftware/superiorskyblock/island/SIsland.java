@@ -4219,6 +4219,38 @@ public class SIsland implements Island {
         IslandChest[] islandChests = this.islandChests.get();
         int oldSize = islandChests.length;
 
+        // If index == -1 make chest automatic expansion by rows from the latest page.
+        if (index == -1) {
+            IslandChest lastPage = islandChests[oldSize - 1];
+            int currentRows = lastPage.getRows();
+
+            // Fill the last page if needed
+            if (currentRows < 6) {
+                int neededRows = 6 - currentRows;
+                if (rows <= neededRows) {
+                    lastPage.setRows(currentRows + rows);
+                    IslandsDatabaseBridge.markIslandChestsToBeSaved(this, lastPage);
+                    return;
+                } else {
+                    lastPage.setRows(6);
+                    IslandsDatabaseBridge.markIslandChestsToBeSaved(this, lastPage);
+                    rows -= neededRows;
+                }
+            }
+
+            int newPages = (rows + 5) / 6; // Round up, as each page can hold up to 6 rows
+            islandChests = Arrays.copyOf(islandChests, oldSize + newPages);
+            this.islandChests.set(islandChests);
+            for (int i = oldSize; i < oldSize + newPages; i++) {
+                islandChests[i] = new SIslandChest(this, i);
+                int rowsToSet = Math.min(rows, 6);
+                islandChests[i].setRows(rowsToSet);
+                IslandsDatabaseBridge.markIslandChestsToBeSaved(this, islandChests[i]);
+                rows -= rowsToSet;
+            }
+            return;
+        }
+
         boolean updatedIslandChests = false;
 
         if (index >= oldSize) {
